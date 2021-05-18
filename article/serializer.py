@@ -4,6 +4,8 @@ from article.models import Article, Category, Tag, Avatar
 
 from user_info.serializers import UserDescSerializers
 
+from comment.serializers import CommentSerializer
+
 
 class TagSerializer(serializers.HyperlinkedModelSerializer):
     """标签序列化器"""
@@ -123,6 +125,10 @@ class ArticleDetailSerializer(ArticleBaseSerializer):
     body_html = serializers.SerializerMethodField()
     # 渲染后的目录
     toc_html = serializers.SerializerMethodField()
+
+    id = serializers.IntegerField(read_only=True)
+
+    comment = CommentSerializer(many=True, read_only=True)
 
     def get_body_html(self, obj):
         return obj.get_md()[0]
