@@ -47,6 +47,8 @@ class AvatarSerializer(serializers.ModelSerializer):
 
 class ArticleBaseSerializer(serializers.HyperlinkedModelSerializer):
     """博客文章序列化器"""
+    id = serializers.IntegerField(read_only=True)
+
     author = UserDescSerializers(read_only=True)
     # category 的嵌套序列化字典
     category = CategorySerializer(read_only=True)
