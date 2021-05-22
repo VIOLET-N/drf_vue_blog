@@ -21,7 +21,23 @@
         </router-link>
 
         <div>{{ formatted_time(article.created) }}</div>
-      </div>
+    </div>
+
+    <div id="paginator">
+        <span v-if="is_page_exists('previous')">
+            <router-link :to="get_path('previous')">
+                Prev
+            </router-link>
+        </span>
+        <span class="current-page">
+            {{ get_page_param('current') }}
+        </span>
+        <span v-if="is_page_exists('next')">
+            <router-link :to="get_path('next')">
+                Next
+            </router-link>
+        </span>
+    </div>
 </template>
 
 <script>
@@ -35,15 +51,89 @@
             }
         },
         mounted(){
-            axios
-                  .get('/api/article')
-                  .then(response => (this.info = response.data))
+            // axios
+            //       .get('/api/article')
+            //       .then(response => (this.info = response.data)),
+            this.get_article_data()
         },
         methods: {
             formatted_time: function (iso_data_string) {
                 const  data = new Date(iso_data_string);
                 return data.toLocaleDateString()
-          }
+            },
+            // 判断页面是否存在
+            is_page_exists(direction) {
+                if (direction === 'next'){
+                    return this.info.next !== null
+                }
+                return this.info.previous !== null
+            },
+            // 获取页码
+            get_page_param: function (direction) {
+                try {
+                    let url_string;
+                    switch (direction) {
+                        case 'next':
+                            url_string = this.info.next;
+                            break;
+                        case 'previous':
+                            url_string = this.info.previous;
+                            break;
+                        default:
+                            return this.$route.query.page
+                    }
+
+                    const url = new URL(url_string);
+                    return url.searchParams.get('page')
+                }
+                catch (err) {
+                    return 0;
+                }
+            },
+            // 获取文章列表数据
+            get_article_data: function () {
+                let url = '/api/article';
+                let params = new URLSearchParams();
+
+                params.appendIfExists('page', this.$route.query.page);
+                params.appendIfExists('search', this.$route.query.search);
+
+                const paramsString = params.toString();
+                if (paramsString.charAt(0) !== ''){
+                    url = url + '/?' + paramsString;
+                }
+
+                axios
+                    .get(url)
+                    .then(response => (this.info = response.data))
+            },
+
+            get_path: function (direction) {
+                let url = '';
+                try {
+                    switch (direction) {
+                        case 'next':
+                            if (this.info.next !== undefined) {
+                                url += (new URL(this.info.next)).search
+                            }
+                            break;
+                        case 'previous':
+                            if (this.info.previous !== undefined) {
+                                url += (new URL(this.info.previous)).search
+                            }
+                            break;
+                    }
+                }
+                catch {
+                    return url
+                }
+                return url
+            }
+        },
+        watch: {
+            $route() {
+                this.get_article_data()
+            }
         }
     }
 </script>
@@ -69,5 +159,21 @@
         background-color: #4e4e4e;
         color: whitesmoke;
         border-radius: 5px;
+    }
+
+    #paginator {
+        text-align: center;
+        padding-top: 50px;
+    }
+
+    a {
+        color: black;
+    }
+
+    .current-page {
+        font-size: x-large;
+        font-weight: bold;
+        padding-left: 10px;
+        padding-right: 10px;
     }
 </style>
