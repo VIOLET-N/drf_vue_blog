@@ -3,17 +3,17 @@
         <div class="grid">
             <div></div>
             <h1>My Drf-Vue Blog</h1>
-            <div class="search">
-                <form>
-                    <input v-model="searchText" type="text" placeholder="请输入搜索内容...">
-                    <button v-on:click.prevent="searchArticles"></button>
-                </form>
-            </div>
+            <SearchButton/>
         </div>
         <hr>
         <div class="login">
             <div v-if="hasLogin">
-                欢迎，{{username}}!
+                <div class="dropdown">
+                    <button class="dropbtn">欢迎，{{username}}!</button>
+                    <div class="dropdown-content">
+                        <router-link :to="{ name: 'UserCenter', params: { username: username }}">用户中心</router-link>
+                    </div>
+                </div>
             </div>
             <div v-else>
                 <router-link to="/login" class="login-link">登录</router-link>
@@ -23,65 +23,24 @@
 </template>
 
 <script>
-    import axios from 'axios';
+    import SearchButton from "../components/SearchButton";
+    import authorization from '../utils/authorization';
 
     export default {
         name: "BlogHeader",
+        components: {SearchButton},
         data: function () {
             return {
-                searchText: '',
                 username: '',
-                hasLogin: '',
+                hasLogin: false,
             }
+        },
+        mounted(){
+            authorization().then((data) => [this.hasLogin, this.username] = data)
         },
         methods: {
-            searchArticles(){
-                const text = this.searchText.trim();
-                if (text.charAt(0) !== '') {
-                    this.$router.push({name: 'Home', query: {search: text}})
-                }
-            }
-        },
-        mounted() {
-            const that = this;
-            const storage = localStorage;
-            // 过期时间
-            const expiredTime = Number(storage.getItem('expiredTime.myblog'));
-            // 当前时间
-            const current = (new Date()).getTime();
-            // 刷新令牌
-            const refreshToken = storage.getItem('refresh.myblog');
-            // 用户名
-            that.username = storage.getItem('username.myblog');
-
-            // 初始 token 未过期
-            if (expiredTime > current) {
-                that.hasLogin = true;
-            }
-            // 初始 Token 过期
-            // 如果有刷新令牌则申请新的Token
-            else if (refreshToken !== null) {
-                axios
-                    .post('/api/token/refresh/', {
-                        refresh: refreshToken,
-                    })
-                    .then(function (response) {
-                        const nextExpiredTime = Date.parse(response.headers.data) + 60000;
-
-                        storage.setItem('access.myblog', response.data.access);
-                        storage.setItem('expiredTime.myblog', nextExpiredTime);
-                        storage.removeItem('refresh.myblog');
-
-                        that.hasLogin = true;
-                    })
-                    .catch(function () {
-                        storage.clear();
-                        that.hasLogin = false;
-                    })
-            }
-            else {
-                storage.clear();
-                that.hasLogin = false;
+            refresh() {
+                this.username = localStorage.getItem('username.myblog');
             }
         }
     }
@@ -98,61 +57,6 @@
         grid-template-columns: 1fr 4fr 1fr;
     }
 
-    .search {
-        padding-top: 22px;
-    }
-
-    * {
-        box-sizing: border-box;
-    }
-
-    form {
-        position: relative;
-        width: 200px;
-        margin: 0;
-    }
-
-    input, button {
-        border: none;
-        outline: none;
-    }
-
-    input {
-        width: 100%;
-        height: 35px;
-        padding-left: 13px;
-        padding-right: 46px;
-    }
-
-    button {
-        height: 35px;
-        width: 35px;
-        cursor: pointer;
-        position: absolute;
-    }
-
-    .search input {
-        border: 2px solid gray;
-        border-radius: 5px;
-        background: transparent;
-        top: 0;
-        right: 0;
-    }
-
-    .search button {
-        background: gray;
-        border-radius: 0 5px 5px 0;
-        width: 45px;
-        top: 0;
-        right: 0;
-    }
-
-    .search button:before {
-        content: "搜索";
-        font-size: 13px;
-        color: white;
-    }
-
     .login-link {
         color: black;
     }
@@ -160,5 +64,51 @@
     .login {
         text-align: right;
         padding-right: 5px;
+    }
+</style>
+
+<style scoped>
+    .dropbtn {
+        background-color: mediumaquamarine;
+        color: white;
+        padding: 8px 8px 30px 8px;
+        font-size: 16px;
+        border: none;
+        cursor: pointer;
+        height: 16px;
+        border-radius: 5px;
+    }
+
+    .dropdown {
+        position: relative;
+        display: inline-block;
+    }
+
+    .dropdown-content {
+        display: none;
+        position: absolute;
+        background-color: #f9f9f9;
+        min-width: 120px;
+        box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+        text-align: center;
+    }
+
+    .dropdown-content a {
+        color: black;
+        padding: 12px 16px;
+        text-decoration: none;
+        display: block;
+    }
+
+    .dropdown-content a:hover {
+        background-color: #f1f1f1;
+    }
+
+    .dropdown:hover .dropdown-content {
+        display: block;
+    }
+
+    .dropdown:hover .dropbtn {
+        background-color: darkslateblue;
     }
 </style>
