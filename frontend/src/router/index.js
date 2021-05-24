@@ -3,6 +3,7 @@ import Home from "../views/Home";
 import ArticleDetail from "../views/ArticleDetail"
 import Login from "../views/Login";
 import UserCenter from "../views/UserCenter";
+import ArticleCreate from "../views/ArticleCreate"
 
 const routes = [
     {
@@ -24,7 +25,12 @@ const routes = [
         path: '/user/:username',
         name: 'UserCenter',
         component: UserCenter
-    }
+    },
+    {
+        path: '/article/create',
+        name: 'ArticleCreate',
+        component: ArticleCreate
+    },
 ];
 
 const router = createRouter({

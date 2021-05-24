@@ -12,6 +12,7 @@
                     <button class="dropbtn">欢迎，{{username}}!</button>
                     <div class="dropdown-content">
                         <router-link :to="{ name: 'UserCenter', params: { username: username }}">用户中心</router-link>
+                        <router-link :to="{ name: 'ArticleCreate'}" v-if="isSuperuser">发表文章</router-link>
                     </div>
                 </div>
             </div>
@@ -33,6 +34,7 @@
             return {
                 username: '',
                 hasLogin: false,
+                isSuperuser: JSON.parse(localStorage.getItem('isSuperuser.myblog')),
             }
         },
         mounted(){

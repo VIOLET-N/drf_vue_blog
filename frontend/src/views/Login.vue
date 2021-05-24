@@ -91,7 +91,13 @@
                         storage.setItem('expiredTime.myblog', expiredTime);
                         storage.setItem('username.myblog', that.signinName);
 
-                        that.$router.push({name: 'Home'});
+                        // 是否是superuser
+                        axios
+                            .get('/api/user/' + that.signinName + '/')
+                            .then(function (response) {
+                                storage.setItem('isSuperuser.myblog', response.data.is_superuser);
+                                that.$router.push({name: 'Home'});
+                            })
                     })
             }
         }

@@ -2,6 +2,13 @@
     <div v-for="article in info.results" v-bind:key="article.url" id="articles">
         <div>
             <span
+                  v-if="article.category !== null"
+                  class="category"
+            >
+                {{ article.category.title }}
+            </span>
+
+            <span
                   v-for="tag in article.tags"
                   v-bind:key="tag"
                   class="tag"
@@ -10,9 +17,6 @@
             </span>
         </div>
 
-<!--        <div class="article-title">-->
-<!--          {{ article.title }}-->
-<!--        </div>-->
         <router-link
                 :to="{name: 'ArticleDetail', params: {id: article.id}}"
                 class="article-title"
@@ -175,5 +179,15 @@
         font-weight: bold;
         padding-left: 10px;
         padding-right: 10px;
+    }
+
+    .category {
+        padding: 5px 10px 5px 10px;
+        margin: 5px 5px 5px 0;
+        font-family: Georgia, Arial, sans-serif;
+        font-size: small;
+        background-color: darkred;
+        color: whitesmoke;
+        border-radius: 15px;
     }
 </style>

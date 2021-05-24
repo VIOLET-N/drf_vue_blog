@@ -85,10 +85,11 @@ class ArticleBaseSerializer(serializers.HyperlinkedModelSerializer):
     }
 
     def check_obj_exists_or_fail(self, model, value, message='default'):
+
         if not self.default_error_messages.get(message, None):
             message = 'default'
 
-        if not model.object.filter(id=value).exists() and value is not None:
+        if not model.objects.filter(id=value).exists() and value is not None:
             self.fail(message, value=value)
 
     # category_id  字段验证器
