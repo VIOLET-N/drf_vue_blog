@@ -6,6 +6,13 @@
             <h1 id="title">{{ article.title }}</h1>
             <p id="subtitle">
                 本文由 {{ article.author.username }} 发布于 {{ formatted_time(article.created)}}
+                <span v-if="isSuperuser">
+                    <router-link
+                            :to="{ name: 'ArticleEdit', params: {id: article.id }}"
+                    >
+                        更新与删除
+                    </router-link>
+                </span>
             </p>
             <div v-html="article.body_html" class="article-body"></div>
         </div>
@@ -16,6 +23,8 @@
         </div>
     </div>
 
+    <Comments :article="article" />
+
     <BlogFooter/>
 </template>
 
@@ -24,10 +33,11 @@
     import BlogHeader from "../components/BlogHeader";
 
     import axios from 'axios'
+    import Comments from "../components/Comments";
 
     export default {
         name: "ArticleDetail",
-        components: {BlogHeader, BlogFooter},
+        components: {Comments, BlogHeader, BlogFooter},
         data: function () {
             return {
                 article: null
@@ -43,6 +53,11 @@
               const date = new Date(iso_data_string);
               return date.toLocaleDateString()
           }
+        },
+        computed: {
+            isSuperuser() {
+                return localStorage.getItem('isSuperuser.myblog') === 'true'
+            }
         }
     }
 </script>

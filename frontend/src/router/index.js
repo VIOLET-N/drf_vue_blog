@@ -4,6 +4,7 @@ import ArticleDetail from "../views/ArticleDetail"
 import Login from "../views/Login";
 import UserCenter from "../views/UserCenter";
 import ArticleCreate from "../views/ArticleCreate"
+import ArticleEdit from "../views/ArticleEdit"
 
 const routes = [
     {
@@ -30,6 +31,11 @@ const routes = [
         path: '/article/create',
         name: 'ArticleCreate',
         component: ArticleCreate
+    },
+    {
+        path: '/article/edit/:id',
+        name: 'ArticleEdit',
+        component: ArticleEdit
     },
 ];
 

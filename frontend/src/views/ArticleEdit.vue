@@ -1,17 +1,8 @@
 <template>
     <BlogHeader/>
 
-    <div id="article-crete">
-        <h3>发表文章</h3>
-        <form id="image_form">
-            <div class="form-elem">
-                <span>图片：</span>
-                <input
-                        type="file"
-                        v-on:change="onFileChange"
-                        id="file">
-            </div>
-        </form>
+    <div id="article-create">
+        <h3>更新文章</h3>
         <form>
             <div class="form-elem">
                 <span>标题：</span>
@@ -21,8 +12,8 @@
             <div class="form-elem">
                 <span>分类：</span>
                 <span
-                    v-for="category in categories"
-                    :key="category.id"
+                      v-for="category in categories"
+                      :key="category.id"
                 >
                     <button
                             class="category-btn"
@@ -36,16 +27,20 @@
 
             <div class="form-elem">
                 <span>标签：</span>
-                <input type="text" v-model="tags" placeholder="输入标签，用都好分割">
+                <input type="text" v-model="tags" placeholder="输入标签，用逗号分割">
             </div>
 
             <div class="form-elem">
-                <span>正文</span>
-                <textarea v-model="body" placeholder="输入正文" cols="80" rows="30"></textarea>
+                <span>正文：</span>
+                <textarea cols="80" rows="20" v-model="body" placeholder="输入正文"></textarea>
             </div>
 
             <div class="form-elem">
                 <button v-on:click.prevent="submit">提交</button>
+            </div>
+
+            <div class="form-elem">
+                <button v-on:click.prevent="deleteArticle" style="background-color: darkred">删除</button>
             </div>
         </form>
     </div>
@@ -56,47 +51,45 @@
 <script>
     import BlogHeader from "../components/BlogHeader";
     import BlogFooter from "../components/BlogFooter";
-    import axios from 'axios';
-    import authorization from "../utils/authorization";
+    import axios from 'axios'
+    import authorization from "../utils/authorization"
 
     export default {
-        name: "ArticleCreate",
+        name: "ArticleEdit",
         components: {BlogFooter, BlogHeader},
         data: function () {
             return {
-                // 文章标题
                 title: '',
-                // 文章正文
                 body: '',
-                // 数据库中的所有分类
-                categories: [],
-                // 选定的分类
+                // 所有分类
+                category: [],
+                // 选定分类
                 selectCategory: null,
                 // 标签
                 tags: '',
-                avatarID: null,
+                // article id
+                articleID: null
             }
         },
         mounted() {
+            // 页面初始化时获取所有分类
             axios
                 .get('/api/category/')
                 .then(response => this.categories = response.data);
+
+            const that = this;
+            axios
+                .get('/api/article/' + that.$route.params.id + '/')
+                .then(function (response) {
+                    const data = response.data;
+                    that.title = data.title;
+                    that.body = data.body;
+                    that.selectCategory = data.category;
+                    that.tags = data.tags.join(',');
+                    that.articleID = data.id;
+                })
         },
         methods: {
-            onFileChange(e){
-              const file = e.target.files[0];
-              let formData = new FormData();
-              formData.append("content", file);
-
-              axios
-                  .post('/api/avatar/', formData, {
-                      headers: {
-                          'Content-Type': 'multipart/form-data',
-                          'Authorization': 'Bearer ' + localStorage.getItem('access.myblog')
-                      }
-                  })
-                  .then( response => this.avatarID = response.data.id)
-            },
             categoryStyle(category) {
                 if (this.selectCategory !== null && category.id === this.selectCategory.id) {
                     return {
@@ -108,60 +101,62 @@
                     color: 'black',
                 }
             },
-            // 选取分类方法
             chooseCategory(category) {
-                // 如果点击已选取的分类， 则将 selectedCategory 置空
                 if (this.selectCategory !== null && this.selectCategory.id === category.id) {
-                    this.selectCategory = null;
+                    this.selectCategory = null
                 }
-                // 如果没有选中
                 else {
                     this.selectCategory = category;
                 }
             },
-            // 点击提交按钮
             submit() {
                 const that = this;
                 authorization()
                     .then(function (response) {
                         if (response[0]) {
-                            // 需要传给后端的数据字典
                             let data = {
                                 title: that.title,
                                 body: that.body,
                             };
-                            data.avatar_id = that.avatarID;
-                            // console.log('图片id', data.avatar_id);
-                            // 添加分类
-                            if (that.selectCategory) {
-                                data.category_id = that.selectCategory.id;
-                                console.log('分类id:',that.selectCategory.id)
-                            }
-                            // 标签处理
-                            data.tages = that.tags
-                                // 用逗号分割标签
-                                .split(/[，,]/)
-                                // 剔除标签首位空格
+
+                            data.category_id = that.selectCategory ? that.selectCategory.id : null;
+
+                            data.tags = that.tags
+                                .split('/[,，]/')
                                 .map(x => x.trim())
-                                // 剔除长度为零的无效标签
                                 .filter(x => x.charAt(0) !== '');
 
-                            // 将发表文章发送至接口
-                            // 成功后前往详情页面
                             const token = localStorage.getItem('access.myblog');
-
                             axios
-                                .post('/api/article/',
+                                .put('/api/article/' + that.articleID + '/',
                                     data,
                                     {
-                                        headers: {Authorization: 'Bearer ' + token }
+                                        headers: {Authorization: 'Bearer ' + token}
                                     })
                                 .then(function (response) {
-                                    that.$router.push({name: 'ArticleDetail', params: {id: response.data.id }});
+                                    that.$router.push({name: 'ArticleDetail', params: {id: response.data.id}});
                                 })
                         }
                         else {
-                            alert('令牌过期，请从新登录。')
+                            alert('令牌过期，请重新登录。')
+                        }
+                    })
+            },
+            deleteArticle(){
+                const that = this;
+                const token = localStorage.getItem('access.myblog');
+                authorization()
+                    .then(function (response) {
+                        if (response[0]) {
+                            axios
+                                .delete('/api/article/' + that.articleID + '/',
+                                    {
+                                        headers: {Authorization: 'Bearer ' + token}
+                                    })
+                                .then(() => that.$router.push({name: 'Home'}))
+                        }
+                        else {
+                            alert('令牌过期，从新登录。')
                         }
                     })
             }
@@ -174,7 +169,7 @@
         margin-right: 10px;
     }
 
-    #article-crete {
+    #article-create {
         text-align: center;
         font-size: large;
     }
@@ -194,14 +189,13 @@
         padding-left: 10px;
         width: 50%;
     }
-
     button {
         height: 35px;
         cursor: pointer;
         border: none;
         outline: none;
         background: steelblue;
-        color: whitesmoke;
+        color: whitesmoke;;
         border-radius: 5px;
         width: 60px;
     }
